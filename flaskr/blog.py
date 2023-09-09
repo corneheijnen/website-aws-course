@@ -3,7 +3,7 @@ from flask import Blueprint, abort, flash, g, redirect, render_template, request
 from flaskr.auth import login_required
 from flaskr.db import get_db
 
-blueprint = Blueprint('blog', __name__)
+blueprint = Blueprint('blog', __name__, url_prefix='/')
 
 
 @blueprint.route('/')
