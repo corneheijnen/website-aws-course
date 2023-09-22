@@ -7,6 +7,7 @@ from flask import current_app, g
 def get_db():
     """Get the database"""
     if 'db' not in g:
+        # TODO: update credentials
         engine = create_engine(
             "mysql+pymysql://admin:j3eCawR71!@database-1.c7vm4wmhspek.eu-central-1.rds.amazonaws.com/blogpost?charset=utf8mb4")
         g.db = engine.connect()
