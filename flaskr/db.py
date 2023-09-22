@@ -1,4 +1,4 @@
-import sqlite3
+from sqlalchemy import create_engine
 
 import click
 from flask import current_app, g
@@ -7,9 +7,10 @@ from flask import current_app, g
 def get_db():
     """Get the database"""
     if 'db' not in g:
-        g.db = sqlite3.connect(current_app.config['DATABASE'],
-                               detect_types=sqlite3.PARSE_DECLTYPES)
-        g.db.row_factory = sqlite3.Row
+        # TODO: update credentials
+        engine = create_engine(
+            "mysql+pymysql://admin:j3eCawR71!@database-1.c7vm4wmhspek.eu-central-1.rds.amazonaws.com/blogpost?charset=utf8mb4")
+        g.db = engine.connect()
 
     return g.db
 
