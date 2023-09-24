@@ -26,13 +26,13 @@ def register():
 
         if error is None:
             try:
-                db = get_db()
-                db.execute(text(
-                    """INSERT INTO user(username, password) VALUES (:username, :password)"""),
-                    {'username': username, 'password': generate_password_hash(password)},
-                )
-                db.commit()
-                db.close()
+                with get_db() as db:
+                    db.execute(text(
+                        """INSERT INTO user(username, password) VALUES (:username, :password)"""),
+                        {'username': username, 'password': generate_password_hash(password)},
+                    )
+                    db.commit()
+                    db.close()
             # except db.IntegrityError:
             except sqlalchemy.exc.IntegrityError:
                 error = f"User {username} is already registered."
@@ -47,12 +47,13 @@ def register():
 @blueprint.route('/login', methods=('GET', 'POST'))
 def login():
     if request.method == 'POST':
+        error = None
         username = request.form['username']
         password = request.form['password']
-        db = get_db()
-        error = None
-        user = db.execute(text("""SELECT * FROM user WHERE username = :username"""), {'username': username}).fetchone()
-        db.close()
+
+        with get_db() as db:
+            user = db.execute(text("""SELECT * FROM user WHERE username = :username"""), {'username': username}).fetchone()
+            db.close()
 
         if user is None:
             error = 'Incorrect username.'
@@ -76,10 +77,10 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        db = get_db()
-        g.user = db.execute(text("""SELECT * FROM user WHERE id = :user_id"""),
-                                  {'user_id': user_id}).fetchone()
-        db.close()
+        with get_db() as db:
+            g.user = db.execute(text("""SELECT * FROM user WHERE id = :user_id"""),
+                                      {'user_id': user_id}).fetchone()
+            db.close()
 
 @blueprint.route('/logout')
 def logout():
