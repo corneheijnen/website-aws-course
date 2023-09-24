@@ -1,7 +1,6 @@
 import functools
-from sqlite3 import IntegrityError
 
-import sqlalchemy
+import pymysql as pymysql
 from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -33,8 +32,9 @@ def register():
                     )
                     db.commit()
                     db.close()
-            # except db.IntegrityError:
-            except sqlalchemy.exc.IntegrityError:
+
+            # Catch exception if the user is already registered
+            except pymysql.err.IntegrityError:
                 error = f"User {username} is already registered."
             else:
                 return redirect(url_for("auth.login"))
