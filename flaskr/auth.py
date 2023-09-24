@@ -1,6 +1,7 @@
 import functools
 
-import pymysql as pymysql
+import pymysql
+import sqlalchemy
 from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -28,13 +29,14 @@ def register():
                 with get_db() as db:
                     db.execute(text(
                         """INSERT INTO user(username, password) VALUES (:username, :password)"""),
-                        {'username': username, 'password': generate_password_hash(password)},
-                    )
+                        {'username': username, 'password': generate_password_hash(password)}, )
                     db.commit()
                     db.close()
 
             # Catch exception if the user is already registered
-            except pymysql.err.IntegrityError:
+            except (
+            sqlalchemy.exc.IntegrityError, pymysql.err.IntegrityError, sqlalchemy.exc.DBAPIError,
+            sqlalchemy.exc.StatementError):
                 error = f"User {username} is already registered."
             else:
                 return redirect(url_for("auth.login"))
@@ -52,7 +54,8 @@ def login():
         password = request.form['password']
 
         with get_db() as db:
-            user = db.execute(text("""SELECT * FROM user WHERE username = :username"""), {'username': username}).fetchone()
+            user = db.execute(text("""SELECT * FROM user WHERE username = :username"""),
+                              {'username': username}).fetchone()
             db.close()
 
         if user is None:
@@ -79,13 +82,15 @@ def load_logged_in_user():
     else:
         with get_db() as db:
             g.user = db.execute(text("""SELECT * FROM user WHERE id = :user_id"""),
-                                      {'user_id': user_id}).fetchone()
+                                {'user_id': user_id}).fetchone()
             db.close()
+
 
 @blueprint.route('/logout')
 def logout():
     session.clear()
     return redirect(url_for('index'))
+
 
 def login_required(view):
     @functools.wraps(view)
@@ -94,4 +99,5 @@ def login_required(view):
             return redirect(url_for('auth.login'))
 
         return view(**kwargs)
+
     return wrapped_view
