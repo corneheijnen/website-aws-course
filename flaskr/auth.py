@@ -1,4 +1,5 @@
 import functools
+import sqlite3
 
 import pymysql
 import sqlalchemy
@@ -36,7 +37,8 @@ def register():
             # Catch exception if the user is already registered
             except (
             sqlalchemy.exc.IntegrityError, pymysql.err.IntegrityError, sqlalchemy.exc.DBAPIError,
-            sqlalchemy.exc.StatementError):
+            sqlalchemy.exc.StatementError, sqlite3.IntegrityError, sqlite3.DatabaseError,
+            sqlalchemy.exc.SQLAlchemyError, pymysql.IntegrityError, pymysql.Error):
                 error = f"User {username} is already registered."
             else:
                 return redirect(url_for("auth.login"))
