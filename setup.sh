@@ -3,6 +3,7 @@ sudo apt-get update
 sudo apt install python3-pip
 sudo apt install python3-flask
 sudo apt install python3-waitress
+cd website-aws-course
 git clone https://github.com/corneheijnen/website-aws-course.git
 cd website-aws-course
 pip install -e .
