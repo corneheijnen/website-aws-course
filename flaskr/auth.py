@@ -1,5 +1,7 @@
 import functools
+from sqlite3 import IntegrityError
 
+import sqlalchemy
 from flask import Blueprint, flash, g, redirect, render_template, request, session, url_for
 
 from werkzeug.security import check_password_hash, generate_password_hash
@@ -15,7 +17,6 @@ def register():
     if request.method == 'POST':
         username = request.form['username']
         password = request.form['password']
-        db = get_db()
         error = None
 
         if not username:
@@ -25,13 +26,15 @@ def register():
 
         if error is None:
             try:
+                db = get_db()
                 db.execute(text(
                     """INSERT INTO user(username, password) VALUES (:username, :password)"""),
                     {'username': username, 'password': generate_password_hash(password)},
                 )
                 db.commit()
+                db.close()
             # except db.IntegrityError:
-            except ValueError:
+            except sqlalchemy.exc.IntegrityError:
                 error = f"User {username} is already registered."
             else:
                 return redirect(url_for("auth.login"))
@@ -49,6 +52,7 @@ def login():
         db = get_db()
         error = None
         user = db.execute(text("""SELECT * FROM user WHERE username = :username"""), {'username': username}).fetchone()
+        db.close()
 
         if user is None:
             error = 'Incorrect username.'
@@ -72,8 +76,10 @@ def load_logged_in_user():
     if user_id is None:
         g.user = None
     else:
-        g.user = get_db().execute(text("""SELECT * FROM user WHERE id = :user_id"""),
+        db = get_db()
+        g.user = db.execute(text("""SELECT * FROM user WHERE id = :user_id"""),
                                   {'user_id': user_id}).fetchone()
+        db.close()
 
 @blueprint.route('/logout')
 def logout():

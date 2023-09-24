@@ -13,6 +13,7 @@ def index():
     posts = db.execute(text("""SELECT p.id, title, body, created, author_id, username
                        FROM post p JOIN user u ON p.author_id = u.id
                        ORDER BY created DESC""")).fetchall()
+    db.close()
     return render_template('blog/index.html', posts=posts)
 
 
@@ -36,16 +37,18 @@ def create():
                 """INSERT INTO post (title, body, author_id)
                 VALUES (:title, :body, :id)"""), parameters={"title": title, "body": body, "id": g.user[0]})
             db.commit()
+            db.close()
             return redirect(url_for('blog.index'))
 
     return render_template('blog/create.html')
 
 
 def get_post(id, check_author=True):
-    post = get_db().execute(text(
-        """SELECT p.id, title, body, created, author_id, username
-        FROM post p JOIN user u ON p.author_id = u.id
-        WHERE p.id = :id """), {'id': id}).fetchone()
+    db = get_db()
+    post = db.execute(text(
+    """SELECT p.id, title, body, created, author_id, username
+    FROM post p JOIN user u ON p.author_id = u.id
+    WHERE p.id = :id """), {'id': id}).fetchone()
 
     if post is None:
         abort(404, f"Post id {id} doesn't exist.")
@@ -79,6 +82,7 @@ def update(id):
             db.execute(text("""UPDATE post SET title = :title, body = :body
                        WHERE id = :id"""), {'title': title, 'body': body, 'id': id})
             db.commit()
+            db.close()
             return redirect(url_for('blog.index'))
 
     return render_template('blog/update.html', post=post)
@@ -91,4 +95,5 @@ def delete(id):
     db = get_db()
     db.execute(text('DELETE FROM post WHERE id = :id'), {'id': id})
     db.commit()
+    db.close()
     return redirect(url_for('blog.index'))
